@@ -1,19 +1,66 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import isAuthenticateGuard from './auth-guard'
 
 const routes = [
     { 
         path: '/',
-        component: () => import(/* webpackChunkName:"ListPage" */ '@/modules/pokemon/pages/ListPage') 
+        redirect: { name: 'dbz-characters' }
     },
     { 
-        path: '/about',
-        component: () => import(/* webpackChunkName:"AboutPage" */ '@/modules/pokemon/pages/AboutPage')
+        path: '/pokemon',
+        component: () => import(/* webpackChunkName:"Pokemon layout" */ '@/modules/pokemon/layouts/PokemonLayout') ,
+        name: 'pokemon',
+        children: [
+            { 
+                path: 'home',
+                name: 'pokemon-home',
+                component: () => import(/* webpackChunkName:"ListPage" */ '@/modules/pokemon/pages/ListPage') 
+            },
+            { 
+                path: 'about',
+                name: 'pokemon-about',
+                component: () => import(/* webpackChunkName:"AboutPage" */ '@/modules/pokemon/pages/AboutPage')
+            },
+            { 
+                path: 'pokemonid/:id',
+                name: 'pokemon-id',
+                component: () => import(/* webpackChunkName:"PokemonPage" */ '@/modules/pokemon/pages/PokemonPage'),
+                props: ( route ) => {
+                    const id  = Number(route.params.id)
+
+                    return isNaN ( id ) ? { id: 1 } : { id }
+                }
+            },
+            { 
+                path: '',
+                redirect: { name: 'pokemon-home' }
+            },
+        ]
     },
+
     { 
-        path: '/:id',
-        name: 'pokemon-id',
-        component: () => import(/* webpackChunkName:"PokemonPage" */ '@/modules/pokemon/pages/PokemonPage') 
+        path: '/dbz',
+        name: 'dbz',
+        beforeEnter: [ isAuthenticateGuard ],
+        component: () => import(/* webpackChunkName:"Dbz layout" */ '@/modules/dbz/layouts/DragonBallLayout') ,
+        children: [
+            { 
+                path: 'characters',
+                name: 'dbz-characters',
+                component: () => import(/* webpackChunkName:"Dbz characters" */ '@/modules/dbz/pages/Characters') 
+            },
+            { 
+                path: 'about',
+                name: 'dbz-about',
+                component: () => import(/* webpackChunkName:"Dbz AboutPage" */ '@/modules/dbz/pages/About')
+            },
+            { 
+                path: '',
+                redirect: { name: 'dbz-characters' }
+            },
+        ]
     },
+   
     { 
         path: '/:pathMatch(.*)*',
         component: () => import(/* webpackChunkName:"NoPageFound" */ '@/modules/shared/pages/NoPageFound')
@@ -24,5 +71,41 @@ const router = createRouter({
     history: createWebHashHistory(),
     routes, 
 })
+
+///Guard global - sincrono
+// router.beforeEach( (to, from, next) =>{
+//     console.log({to, from, next});
+
+//     const random = Math.random() * 100
+    
+//     if (random > 50) {
+//         console.log('autentificado');
+//         next()
+//     }else{
+//         console.log("bloqueado por el beforeEach guard", random)
+//         next({name: 'pokemon-home'})
+//     }
+// })
+
+// const canAccess = () =>{
+//     return new Promise( (resolve =>{
+//         const random = Math.random() * 100
+    
+//         if (random > 50) {
+//             console.log('Autentificado - canAccess');
+//             resolve(true)
+//         }else{
+//             console.log("bloqueado por el beforeEach guard - canAccess", random)
+//             resolve(false)
+//         }
+
+//     }))
+// }
+
+// router.beforeEach( async (to, from, next) =>{
+//     const authorized = await canAccess()
+
+//     authorized ? next() : next({name: 'pokemon-home'})
+// })
 
 export default router;
